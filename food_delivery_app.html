@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticket — food, ordered</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --charcoal:#1C1B1A;
+    --paper:#F7F3EC;
+    --paper-dim:#EFE9DD;
+    --chili:#E8452D;
+    --mango:#F5A623;
+    --sage:#5F8464;
+    --muted:#8A8578;
+    --ink:#242220;
+    --line:#D8D0C0;
+    --radius:2px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--charcoal);
+    color:var(--paper);
+    font-family:'Work Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--chili); color:var(--paper); }
+  a{color:inherit;}
+
+  .display{
+    font-family:'Archivo Black', sans-serif;
+    text-transform:uppercase;
+    letter-spacing:-0.01em;
+    line-height:0.95;
+  }
+  .mono{
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px clamp(20px,4vw,56px);
+    position:sticky; top:0; z-index:50;
+    background:rgba(28,27,26,0.88);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid rgba(247,243,236,0.1);
+  }
+  .logo{ display:flex; align-items:center; gap:10px; }
+  .logo .mark{
+    width:28px; height:28px; background:var(--chili);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Archivo Black'; font-size:16px; color:var(--paper);
+    transform:rotate(-4deg);
+  }
+  .logo .name{ font-family:'Archivo Black'; font-size:20px; letter-spacing:0.02em; }
+  .topbar nav{ display:flex; gap:32px; font-size:14px; color:var(--muted); }
+  .topbar nav a{ text-decoration:none; transition:color .15s; }
+  .topbar nav a:hover{ color:var(--paper); }
+  .cart-toggle{
+    display:none;
+    background:var(--mango); color:var(--ink); border:none;
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:13px;
+    padding:9px 14px; cursor:pointer; border-radius:var(--radius);
+  }
+
+  /* ---------- Layout shell ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    min-height:100vh;
+  }
+  .main{ min-width:0; }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding:clamp(50px,8vw,100px) clamp(20px,4vw,56px) 60px;
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:40px;
+    align-items:center;
+    border-bottom:1px solid rgba(247,243,236,0.1);
+  }
+  .hero .eyebrow{
+    font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:0.12em;
+    color:var(--mango); text-transform:uppercase; margin-bottom:18px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .hero .eyebrow::before{ content:''; width:18px; height:1px; background:var(--mango); }
+  .hero h1{
+    font-size:clamp(38px, 5.4vw, 74px);
+    color:var(--paper);
+  }
+  .hero h1 span{ color:var(--chili); }
+  .hero p.sub{
+    margin-top:22px; max-width:440px;
+    font-size:17px; line-height:1.6; color:#C9C4B8;
+  }
+  .hero-ctas{ display:flex; gap:14px; margin-top:34px; }
+  .btn{
+    font-family:'IBM Plex Mono'; font-size:13.5px; font-weight:600;
+    padding:14px 24px; border-radius:var(--radius); border:none; cursor:pointer;
+    text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    transition:transform .15s ease;
+  }
+  .btn:hover{ transform:translateY(-2px); }
+  .btn-primary{ background:var(--chili); color:var(--paper); }
+  .btn-ghost{ background:transparent; color:var(--paper); border:1px solid rgba(247,243,236,0.3); }
+
+  /* receipt visual */
+  .receipt-wrap{ display:flex; justify-content:center; }
+  .receipt{
+    background:var(--paper); color:var(--ink); width:270px;
+    padding:26px 22px 34px;
+    font-family:'IBM Plex Mono';
+    font-size:12.5px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.6);
+    position:relative;
+    transform:rotate(2.2deg);
+    animation:sway 6s ease-in-out infinite;
+  }
+  @keyframes sway{
+    0%,100%{ transform:rotate(2.2deg); }
+    50%{ transform:rotate(-1.4deg); }
+  }
+  .receipt::after{
+    content:'';
+    position:absolute; left:0; right:0; bottom:-9px; height:16px;
+    background:
+      linear-gradient(-45deg, var(--paper) 8px, transparent 0) 0 0,
+      linear-gradient(45deg, var(--paper) 8px, transparent 0) 0 0;
+    background-size:16px 16px; background-repeat:repeat-x;
+  }
+  .receipt .r-head{ text-align:center; margin-bottom:14px; }
+  .receipt .r-head .rn{ font-family:'Archivo Black'; font-size:15px; letter-spacing:0.02em; }
+  .receipt .r-head .rd{ color:var(--muted); margin-top:4px; font-size:11px; }
+  .receipt .dash{ border-top:1px dashed var(--line); margin:10px 0; }
+  .rline{
+    display:flex; justify-content:space-between; gap:8px; margin:7px 0;
+    opacity:0; animation:printline .4s ease forwards;
+  }
+  .rline b{ font-weight:600; }
+  .r1{ animation-delay:.3s; } .r2{ animation-delay:.6s; } .r3{ animation-delay:.9s; }
+  .r4{ animation-delay:1.2s; } .r5{ animation-delay:1.5s; } .r6{ animation-delay:1.8s;}
+  @keyframes printline{ from{ opacity:0; transform:translateY(-4px);} to{ opacity:1; transform:translateY(0);} }
+  .receipt .total-row{ font-size:14px; margin-top:4px; }
+  .receipt .stamp{
+    margin-top:16px; text-align:center; color:var(--sage);
+    border:1.5px solid var(--sage); display:inline-block; padding:3px 10px;
+    transform:rotate(-3deg); font-size:11px; letter-spacing:0.08em;
+    width:100%; text-align:center;
+  }
+
+  /* ---------- Category rail ---------- */
+  .categories{
+    display:flex; gap:10px; overflow-x:auto; padding:22px clamp(20px,4vw,56px);
+    border-bottom:1px solid rgba(247,243,236,0.1);
+    scrollbar-width:none;
+  }
+  .categories::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:0 0 auto; padding:9px 16px; border-radius:999px;
+    border:1px solid rgba(247,243,236,0.18); font-size:13px; color:#C9C4B8;
+    cursor:pointer; white-space:nowrap; transition:all .15s;
+    font-family:'Work Sans'; font-weight:500;
+  }
+  .chip:hover{ border-color:var(--mango); color:var(--paper); }
+  .chip.active{ background:var(--mango); color:var(--ink); border-color:var(--mango); font-weight:600; }
+
+  /* ---------- Restaurant grid ---------- */
+  .section-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    padding:36px clamp(20px,4vw,56px) 4px;
+  }
+  .section-head h2{ font-family:'Archivo Black'; font-size:26px; text-transform:uppercase; }
+  .section-head .count{ font-family:'IBM Plex Mono'; font-size:12px; color:var(--muted); }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+    gap:18px; padding:20px clamp(20px,4vw,56px) 60px;
+  }
+  .card{
+    background:var(--paper); color:var(--ink); border-radius:var(--radius);
+    padding:18px 18px 16px; position:relative;
+    border:1px solid transparent;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .card:hover{ transform:translateY(-4px); box-shadow:0 18px 32px -18px rgba(0,0,0,0.5); }
+  .card::before{
+    content:''; position:absolute; left:0; right:0; top:0; height:4px;
+    background:var(--chili);
+  }
+  .card .top-row{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .card .r-name{ font-family:'Archivo Black'; font-size:16.5px; text-transform:uppercase; line-height:1.1; max-width:75%; }
+  .card .tag{
+    font-family:'IBM Plex Mono'; font-size:10.5px; background:var(--paper-dim);
+    color:var(--muted); padding:3px 7px; border-radius:2px; white-space:nowrap;
+  }
+  .card .meta{ display:flex; gap:12px; margin-top:8px; font-size:12px; color:var(--muted); font-family:'IBM Plex Mono'; }
+  .card .cuisine{ font-size:13px; color:#5a564c; margin-top:10px; }
+  .card .dash{ border-top:1px dashed var(--line); margin:14px 0 12px; }
+  .item-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:13.5px; margin:8px 0;
+  }
+  .item-row .iname{ color:var(--ink); }
+  .item-row .iprice{ font-family:'IBM Plex Mono'; color:var(--muted); margin-left:8px; }
+  .add-btn{
+    background:none; border:1.5px solid var(--ink); color:var(--ink);
+    width:24px; height:24px; border-radius:50%; cursor:pointer;
+    font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all .15s;
+  }
+  .add-btn:hover{ background:var(--chili); border-color:var(--chili); color:var(--paper); }
+  .item-inline{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+  /* ---------- Cart / ticket panel ---------- */
+  .ticket-panel{
+    background:var(--paper); color:var(--ink);
+    border-left:1px solid rgba(0,0,0,0.08);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:26px 24px 30px;
+    display:flex; flex-direction:column;
+  }
+  .ticket-panel h3{
+    font-family:'Archivo Black'; font-size:18px; text-transform:uppercase;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .ticket-panel .order-no{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--muted); margin-top:4px; }
+  .ticket-panel .dash{ border-top:1px dashed var(--line); margin:16px 0; }
+  .cart-empty{ color:var(--muted); font-size:13.5px; margin-top:30px; line-height:1.6; }
+  .cart-items{ flex:1; }
+  .cart-line{
+    display:flex; justify-content:space-between; gap:10px; font-size:13.5px;
+    padding:10px 0; border-bottom:1px dashed var(--line);
+  }
+  .cart-line .cl-name{ line-height:1.3; }
+  .cart-line .cl-shop{ font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--muted); display:block; margin-top:2px; }
+  .cart-line .cl-right{ display:flex; align-items:center; gap:10px; font-family:'IBM Plex Mono'; }
+  .remove-btn{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:15px; }
+  .remove-btn:hover{ color:var(--chili); }
+  .totals{ margin-top:auto; padding-top:16px; }
+  .trow{ display:flex; justify-content:space-between; font-family:'IBM Plex Mono'; font-size:13px; margin:6px 0; color:var(--muted); }
+  .trow.grand{ color:var(--ink); font-size:16px; font-weight:600; margin-top:10px; }
+  .checkout-btn{
+    width:100%; margin-top:18px; background:var(--chili); color:var(--paper);
+    border:none; padding:15px; font-family:'IBM Plex Mono'; font-weight:600;
+    font-size:13.5px; cursor:pointer; border-radius:var(--radius);
+    letter-spacing:0.03em; transition:transform .15s;
+  }
+  .checkout-btn:hover{ transform:translateY(-2px); }
+  .checkout-btn:disabled{ background:#D8D0C0; color:#8A8578; cursor:not-allowed; transform:none; }
+
+  footer{
+    text-align:center; padding:30px; color:var(--muted);
+    font-family:'IBM Plex Mono'; font-size:11.5px;
+    border-top:1px solid rgba(247,243,236,0.1);
+  }
+
+  @media (max-width:920px){
+    .shell{ grid-template-columns:1fr; }
+    .hero{ grid-template-columns:1fr; }
+    .receipt-wrap{ order:-1; }
+    .cart-toggle{ display:inline-flex; }
+    .topbar nav{ display:none; }
+    .ticket-panel{
+      position:fixed; right:0; top:0; height:100vh; width:min(340px,86vw);
+      transform:translateX(100%); transition:transform .28s ease; z-index:100;
+      box-shadow:-20px 0 40px rgba(0,0,0,0.4);
+    }
+    .ticket-panel.open{ transform:translateX(0); }
+    .scrim{
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:90;
+    }
+    .scrim.show{ display:block; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="mark">T</div>
+    <div class="name">Ticket</div>
+  </div>
+  <nav>
+    <a href="#menu">Restaurants</a>
+    <a href="#how">How it works</a>
+  </nav>
+  <button class="cart-toggle" id="cartToggle">Order · <span id="toggleCount">0</span></button>
+</div>
+
+<div class="shell">
+  <div class="main">
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Delivery, kitchen-fresh</div>
+        <h1 class="display">Hungry?<br>Ticket's<br>already <span>printing.</span></h1>
+        <p class="sub">Order from the kitchens near you. Every order prints instantly — no spinning wheels, no guesswork, just a receipt that tells you exactly what's coming and when.</p>
+        <div class="hero-ctas">
+          <a href="#menu" class="btn btn-primary">Browse kitchens →</a>
+          <a href="#how" class="btn btn-ghost">How it works</a>
+        </div>
+      </div>
+      <div class="receipt-wrap">
+        <div class="receipt">
+          <div class="r-head">
+            <div class="rn">TICKET №4471</div>
+            <div class="rd">TUE · 12:41 PM · TABLE-TO-DOOR</div>
+          </div>
+          <div class="dash"></div>
+          <div class="rline r1"><span>1x Smash Burger</span><b>$11.00</b></div>
+          <div class="rline r2"><span>1x Kimchi Fries</span><b>$7.50</b></div>
+          <div class="rline r3"><span>2x Iced Yuzu Tea</span><b>$9.00</b></div>
+          <div class="dash"></div>
+          <div class="rline r4"><span>Subtotal</span><b>$27.50</b></div>
+          <div class="rline r5"><span>Delivery</span><b>$2.99</b></div>
+          <div class="rline r6 total-row"><span><b>TOTAL</b></span><b>$30.49</b></div>
+          <div class="stamp mono">● FIRING NOW</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="categories" id="how">
+      <div class="chip active" data-cat="all">All kitchens</div>
+      <div class="chip" data-cat="Burgers">Burgers</div>
+      <div class="chip" data-cat="Noodles">Noodles</div>
+      <div class="chip" data-cat="Pizza">Pizza</div>
+      <div class="chip" data-cat="Tacos">Tacos</div>
+      <div class="chip" data-cat="Bowls">Bowls</div>
+      <div class="chip" data-cat="Dessert">Dessert</div>
+    </div>
+
+    <div class="section-head" id="menu">
+      <h2 class="display">Near you now</h2>
+      <span class="count mono" id="resultCount">7 kitchens</span>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="ticket-panel" id="ticketPanel">
+    <h3>Your ticket <span class="mono" style="font-size:11px;">✕</span></h3>
+    <div class="order-no mono" id="orderNo">NO ITEMS YET</div>
+    <div class="dash"></div>
+    <div class="cart-items" id="cartItems">
+      <p class="cart-empty">Nothing firing yet. Add a dish from any kitchen and it'll print here.</p>
+    </div>
+    <div class="totals" id="totalsBlock" style="display:none;">
+      <div class="trow"><span>Subtotal</span><span id="sSub">$0.00</span></div>
+      <div class="trow"><span>Delivery</span><span id="sDel">$2.99</span></div>
+      <div class="trow grand"><span>Total</span><span id="sTotal">$0.00</span></div>
+      <button class="checkout-btn" id="checkoutBtn">Fire the order →</button>
+    </div>
+  </aside>
+</div>
+
+<footer>TICKET — a food ordering concept · made for demonstration</footer>
+
+<script>
+const restaurants = [
+  { name:"Smoke & Patty", cat:"Burgers", cuisine:"American diner", time:"22–32 min", rating:"4.8",
+    items:[["Smash Burger",11.00],["Kimchi Fries",7.50],["Malt Shake",5.25]] },
+  { name:"Noodle Theory", cat:"Noodles", cuisine:"Hand-pulled noodle bar", time:"18–28 min", rating:"4.9",
+    items:[["Dan Dan Noodles",10.50],["Chili Wontons",6.75],["Iced Yuzu Tea",4.50]] },
+  { name:"Forno Basso", cat:"Pizza", cuisine:"Wood-fired Neapolitan", time:"25–35 min", rating:"4.7",
+    items:[["Margherita",13.00],["Nduja Pie",15.50],["Garlic Knots",5.00]] },
+  { name:"El Trompo", cat:"Tacos", cuisine:"Street-style tacos", time:"15–25 min", rating:"4.9",
+    items:[["Al Pastor (3)",9.00],["Birria Taco (2)",8.50],["Horchata",4.00]] },
+  { name:"Grain & Green", cat:"Bowls", cuisine:"Grain bowls, fast-casual", time:"12–20 min", rating:"4.6",
+    items:[["Harvest Bowl",10.75],["Miso Salmon Bowl",13.25],["Ginger Lemonade",4.25]] },
+  { name:"Little Cardamom", cat:"Bowls", cuisine:"South Indian kitchen", time:"25–35 min", rating:"4.8",
+    items:[["Chicken Biryani",12.50],["Paneer Tikka",9.75],["Mango Lassi",4.75]] },
+  { name:"Sugar Ticket", cat:"Dessert", cuisine:"Bakery & soft serve", time:"10–18 min", rating:"4.9",
+    items:[["Basque Cheesecake Slice",6.50],["Soft Serve Cone",4.00],["Cookie Sandwich",5.25]] },
+];
+
+const grid = document.getElementById('grid');
+const cart = {}; // key: "restaurant|item" -> {name, shop, price, qty}
+let orderCounter = 4471;
+
+function renderGrid(filter){
+  grid.innerHTML = '';
+  const list = filter==='all' ? restaurants : restaurants.filter(r=>r.cat===filter);
+  document.getElementById('resultCount').textContent = list.length + ' kitchen' + (list.length!==1?'s':'');
+  list.forEach(r=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="top-row">
+        <div class="r-name">${r.name}</div>
+        <div class="tag">${r.cat}</div>
+      </div>
+      <div class="cuisine">${r.cuisine}</div>
+      <div class="meta"><span>★ ${r.rating}</span><span>${r.time}</span></div>
+      <div class="dash"></div>
+      ${r.items.map(([iname,price])=>`
+        <div class="item-row item-inline">
+          <span class="iname">${iname}<span class="iprice">$${price.toFixed(2)}</span></span>
+          <button class="add-btn" data-shop="${r.name}" data-item="${iname}" data-price="${price}">+</button>
+        </div>
+      `).join('')}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+renderGrid('all');
+
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    renderGrid(chip.dataset.cat);
+  });
+});
+
+grid.addEventListener('click', e=>{
+  const btn = e.target.closest('.add-btn');
+  if(!btn) return;
+  const key = btn.dataset.shop + '|' + btn.dataset.item;
+  if(cart[key]){ cart[key].qty += 1; }
+  else{
+    cart[key] = { name:btn.dataset.item, shop:btn.dataset.shop, price:parseFloat(btn.dataset.price), qty:1 };
+  }
+  btn.style.background = 'var(--sage)'; btn.style.borderColor='var(--sage)'; btn.style.color='var(--paper)';
+  setTimeout(()=>{ btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; }, 260);
+  renderCart();
+});
+
+function renderCart(){
+  const items = Object.entries(cart);
+  const cartItemsEl = document.getElementById('cartItems');
+  const totalsBlock = document.getElementById('totalsBlock');
+  const toggleCount = document.getElementById('toggleCount');
+  const orderNo = document.getElementById('orderNo');
+  const totalQty = items.reduce((s,[,v])=>s+v.qty,0);
+  toggleCount.textContent = totalQty;
+
+  if(items.length===0){
+    cartItemsEl.innerHTML = '<p class="cart-empty">Nothing firing yet. Add a dish from any kitchen and it\'ll print here.</p>';
+    totalsBlock.style.display = 'none';
+    orderNo.textContent = 'NO ITEMS YET';
+    return;
+  }
+
+  orderNo.textContent = `TICKET №${orderCounter} · FIRING`;
+  cartItemsEl.innerHTML = items.map(([key,v])=>`
+    <div class="cart-line">
+      <div class="cl-name">${v.qty}× ${v.name}<span class="cl-shop">${v.shop}</span></div>
+      <div class="cl-right">
+        <span>$${(v.price*v.qty).toFixed(2)}</span>
+        <button class="remove-btn" data-key="${key}">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  const subtotal = items.reduce((s,[,v])=>s+v.price*v.qty,0);
+  const delivery = 2.99;
+  document.getElementById('sSub').textContent = '$'+subtotal.toFixed(2);
+  document.getElementById('sDel').textContent = '$'+delivery.toFixed(2);
+  document.getElementById('sTotal').textContent = '$'+(subtotal+delivery).toFixed(2);
+  totalsBlock.style.display = 'block';
+}
+
+document.getElementById('cartItems').addEventListener('click', e=>{
+  const btn = e.target.closest('.remove-btn');
+  if(!btn) return;
+  delete cart[btn.dataset.key];
+  renderCart();
+});
+
+document.getElementById('checkoutBtn').addEventListener('click', ()=>{
+  const btn = document.getElementById('checkoutBtn');
+  btn.textContent = 'Order fired ✓';
+  btn.disabled = true;
+  setTimeout(()=>{
+    Object.keys(cart).forEach(k=>delete cart[k]);
+    orderCounter += 1;
+    renderCart();
+    btn.textContent = 'Fire the order →';
+    btn.disabled = false;
+    document.getElementById('ticketPanel').classList.remove('open');
+    document.getElementById('scrim').classList.remove('show');
+  }, 1400);
+});
+
+// mobile cart toggle
+const ticketPanel = document.getElementById('ticketPanel');
+const scrim = document.getElementById('scrim');
+document.getElementById('cartToggle').addEventListener('click', ()=>{
+  ticketPanel.classList.add('open');
+  scrim.classList.add('show');
+});
+scrim.addEventListener('click', ()=>{
+  ticketPanel.classList.remove('open');
+  scrim.classList.remove('show');
+});
+</script>
+
+</body>
+</html>
